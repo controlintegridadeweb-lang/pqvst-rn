@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import { issueCredentials, saveHeadcount, type FormState, type IssueState } from "@/app/gestao/coleta/actions";
-import { ShellTitle, shellButton, shellCard, shellField, shellNote } from "@/app/gestao/desk-ui";
+import { shellButton, shellCard, shellField, shellNote } from "@/app/gestao/desk-ui";
 
 const field = shellField;
 const labelClass = "grid gap-2 text-sm font-medium text-[#5c5b73]";
@@ -36,36 +36,136 @@ export function CredentialDesk({ canManage, organizations, cycles, populations, 
   const currentOrg = orgs.some((organization) => organization.id === organizationId) ? organizationId : (orgs[0]?.id ?? "");
   const population = populations.find((item) => item.cycleId === selected?.id && item.organizationId === currentOrg);
   const balance = balances.find((item) => item.cycleId === selected?.id && item.organizationId === currentOrg);
-  const remaining = population ? population.headcount - (balance?.total ?? 0) : null;
+  const remaining = population ? Math.max(population.headcount - (balance?.total ?? 0), 0) : null;
+  const canIssue = Boolean(selected?.collecting && currentOrg && population && remaining !== null && remaining > 0);
 
   const [headcountState, saveAction, saving] = useActionState(saveHeadcount, idleForm);
   const [issueState, issueAction, issuing] = useActionState(issueCredentials, idleIssue);
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="mt-5 grid items-start gap-5 xl:grid-cols-5">
-      <div className="grid gap-5 xl:col-span-3">
-        <section className={`${shellCard} px-5 py-5 sm:px-6`}>
-          <ShellTitle kicker="Saldo" title="Por órgão e ciclo" />
-          <div className="mt-5">
-            <BalanceTable organizations={organizations} cycles={cycles} populations={populations} balances={balances} />
-          </div>
-        </section>
-        {issueState.tokens.length > 0 ? (
-          <section className={`${shellCard} px-5 py-5 sm:px-6`}>
-            <ShellTitle kicker="Uma vez" title="Copie agora" />
-            <p className="mt-2 text-sm leading-6 text-[#7a7b90]">
-              Cada linha é uma credencial de uso único. A base guarda só o hash. Se esta tela for fechada, a lista não volta.
+    <section className={`${shellCard} px-5 py-6 sm:px-6`}>
+      <Step number="1" title="Selecione a coleta">
+        {selected ? (
+          <div className="grid gap-4 sm:max-w-md">
+            <label className={labelClass}>
+              Ciclo
+              <select
+                className={field}
+                value={selected.id}
+                onChange={(event) => {
+                  setCycleId(event.target.value);
+                  setOrganizationId("");
+                }}
+              >
+                {editableCycles.map((cycle) => (
+                  <option key={cycle.id} value={cycle.id}>
+                    {cycle.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={labelClass}>
+              Órgão participante
+              <select className={field} value={currentOrg} onChange={(event) => setOrganizationId(event.target.value)}>
+                {orgs.map((organization) => (
+                  <option key={organization.id} value={organization.id}>
+                    {organization.acronym}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="text-sm leading-6 text-[#7a7b90]">
+              {population
+                ? `${population.headcount.toLocaleString("pt-BR")} servidores elegíveis. ${balance?.available ?? 0} credenciais ainda não usadas, ${balance?.consumed ?? 0} já consumidas.`
+                : "O quantitativo de elegíveis ainda não foi registrado para este órgão."}
+              {remaining !== null ? ` Cabem mais ${remaining.toLocaleString("pt-BR")}.` : ""}
             </p>
+            {selected && !selected.collecting ? (
+              <p className="text-sm leading-6 text-[#7a7b90]">
+                A emissão e o envio ficam disponíveis de {selected.opensLabel} a {selected.closesLabel}.
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className={shellNote("muted")}>Nenhum ciclo com órgão participante está disponível para este perfil.</p>
+        )}
+      </Step>
+
+      <Step number="2" title="Informe os servidores elegíveis">
+        <p className="text-sm leading-6 text-[#7a7b90]">Informe quantos servidores podem participar desta coleta.</p>
+        {canManage && selected && currentOrg ? (
+          <form action={saveAction} className="mt-4 grid gap-4 sm:max-w-md">
+            <input type="hidden" name="cycleId" value={selected.id} />
+            <input type="hidden" name="organizationId" value={currentOrg} />
+            <label className={labelClass}>
+              Quantidade de servidores elegíveis
+              <input name="headcount" type="number" required min={1} max={100000} placeholder="Ex: 150" className={field} />
+            </label>
+            <div className="flex justify-end">
+              <button type="submit" disabled={saving} className={shellButton}>
+                {saving ? "Gravando…" : "Salvar quantidade"}
+              </button>
+            </div>
+            {headcountState.error ? (
+              <p role="alert" className={shellNote("error")}>
+                {headcountState.error}
+              </p>
+            ) : null}
+            {headcountState.notice ? <p className={shellNote("ok")}>{headcountState.notice}</p> : null}
+          </form>
+        ) : (
+          <p className="mt-4 text-sm leading-6 text-[#7a7b90]">
+            O quantitativo de elegíveis é gravado pela administração estadual.
+          </p>
+        )}
+      </Step>
+
+      <Step number="3" title="Emita as credenciais">
+        <p className="text-sm leading-6 text-[#7a7b90]">
+          Após informar a quantidade de elegíveis, você poderá emitir as credenciais de participação.
+        </p>
+        {selected && currentOrg ? (
+          <form action={issueAction} className="mt-4 grid gap-4 sm:max-w-md">
+            <input type="hidden" name="cycleId" value={selected.id} />
+            <input type="hidden" name="organizationId" value={currentOrg} />
+            <label className={labelClass}>
+              Quantidade
+              <input
+                name="quantity"
+                type="number"
+                required
+                min={1}
+                max={500}
+                defaultValue={1}
+                disabled={!canIssue}
+                className={field}
+              />
+            </label>
+            <button type="submit" disabled={issuing || !canIssue} className={shellButton}>
+              {issuing ? "Emitindo…" : "Emitir credenciais"}
+            </button>
+            {issueState.error ? (
+              <p role="alert" className={shellNote("error")}>
+                {issueState.error}
+              </p>
+            ) : null}
+          </form>
+        ) : null}
+        <p className="mt-4 text-sm leading-6 text-[#7a7b90]">
+          As credenciais devem ser copiadas ou exportadas no momento da emissão, pois não poderão ser consultadas novamente.
+        </p>
+        {issueState.tokens.length > 0 ? (
+          <div className="mt-4 grid gap-4 sm:max-w-xl">
             <textarea
               readOnly
               value={issueState.tokens.join("\n")}
-              className={`${field} mt-4 h-48 font-mono`}
+              className={`${field} h-48 font-mono`}
               aria-label="Credenciais emitidas"
             />
             <button
               type="button"
-              className={`${shellButton} mt-4`}
+              className={shellButton}
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(issueState.tokens.join("\n"));
@@ -77,166 +177,20 @@ export function CredentialDesk({ canManage, organizations, cycles, populations, 
             >
               {copied ? "Lista copiada" : "Copiar lista"}
             </button>
-          </section>
-        ) : null}
-      </div>
-      <div className="grid gap-5 xl:sticky xl:top-4 xl:col-span-2">
-        <section className={`${shellCard} px-5 py-5`}>
-          <ShellTitle kicker="Seleção" title="Ciclo e órgão" />
-          <div className="mt-5">
-            {selected ? (
-              <div className="grid gap-4">
-                <label className={labelClass}>
-                  Ciclo
-                  <select
-                    className={field}
-                    value={selected.id}
-                    onChange={(event) => {
-                      setCycleId(event.target.value);
-                      setOrganizationId("");
-                    }}
-                  >
-                    {editableCycles.map((cycle) => (
-                      <option key={cycle.id} value={cycle.id}>
-                        {cycle.name} · {cycle.statusLabel} · {cycle.opensLabel} a {cycle.closesLabel}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className={labelClass}>
-                  Órgão
-                  <select className={field} value={currentOrg} onChange={(event) => setOrganizationId(event.target.value)}>
-                    {orgs.map((organization) => (
-                      <option key={organization.id} value={organization.id}>
-                        {organization.acronym} — {organization.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <p className={shellNote("muted")}>
-                  {population
-                    ? `${population.headcount} servidores elegíveis. ${balance?.available ?? 0} credenciais ainda não usadas, ${balance?.consumed ?? 0} já consumidas.`
-                    : "O quantitativo de elegíveis ainda não foi registrado para este órgão."}
-                  {remaining !== null ? ` Cabem mais ${Math.max(remaining, 0)}.` : ""}
-                </p>
-                {selected && !selected.collecting ? (
-                  <p className="text-sm leading-6 text-[#7a7b90]">
-                    A emissão e o envio ficam disponíveis de {selected.opensLabel} a {selected.closesLabel}.
-                  </p>
-                ) : null}
-              </div>
-            ) : (
-              <p className={shellNote("muted")}>Nenhum ciclo com órgão participante está disponível para este perfil.</p>
-            )}
           </div>
-        </section>
-
-        {canManage && selected && currentOrg ? (
-          <section className={`${shellCard} px-5 py-5`}>
-            <ShellTitle kicker="Elegíveis" title="Quantitativo" />
-            <form action={saveAction} className="mt-5 grid gap-4">
-              <input type="hidden" name="cycleId" value={selected.id} />
-              <input type="hidden" name="organizationId" value={currentOrg} />
-              <label className={labelClass}>
-                Servidores elegíveis
-                <input name="headcount" type="number" required min={1} max={100000} className={field} />
-              </label>
-              <label className={labelClass}>
-                Fonte do número
-                <input name="sourceNote" required minLength={5} maxLength={300} className={field} />
-              </label>
-              <button type="submit" disabled={saving} className={shellButton}>
-                {saving ? "Gravando…" : "Registrar quantitativo"}
-              </button>
-              {headcountState.error ? (
-                <p role="alert" className={shellNote("error")}>
-                  {headcountState.error}
-                </p>
-              ) : null}
-              {headcountState.notice ? <p className={shellNote("ok")}>{headcountState.notice}</p> : null}
-            </form>
-          </section>
         ) : null}
-
-        {selected?.collecting && currentOrg && population ? (
-          <section className={`${shellCard} px-5 py-5`}>
-            <ShellTitle kicker="Uso único" title="Emitir credenciais" />
-            <form action={issueAction} className="mt-5 grid gap-4">
-              <input type="hidden" name="cycleId" value={selected.id} />
-              <input type="hidden" name="organizationId" value={currentOrg} />
-              <label className={labelClass}>
-                Quantidade
-                <input name="quantity" type="number" required min={1} max={500} defaultValue={1} className={field} />
-              </label>
-              <button type="submit" disabled={issuing} className={shellButton}>
-                {issuing ? "Emitindo…" : "Gerar credenciais"}
-              </button>
-              {issueState.error ? (
-                <p role="alert" className={shellNote("error")}>
-                  {issueState.error}
-                </p>
-              ) : null}
-            </form>
-          </section>
-        ) : null}
-      </div>
-    </div>
+      </Step>
+    </section>
   );
 }
 
-function BalanceTable({
-  organizations,
-  cycles,
-  populations,
-  balances,
-}: Pick<CredentialDeskProps, "organizations" | "cycles" | "populations" | "balances">) {
-  const rows = cycles.flatMap((cycle) =>
-    cycle.organizationIds.map((organizationId) => {
-      const organization = organizations.find((item) => item.id === organizationId);
-      const population = populations.find((item) => item.cycleId === cycle.id && item.organizationId === organizationId);
-      const balance = balances.find((item) => item.cycleId === cycle.id && item.organizationId === organizationId);
-      return {
-        key: `${cycle.id}-${organizationId}`,
-        cycle: cycle.name,
-        organization: organization ? `${organization.acronym}` : "Órgão",
-        eligible: population?.headcount ?? null,
-        available: balance?.available ?? 0,
-        consumed: balance?.consumed ?? 0,
-        room: population ? population.headcount - (balance?.total ?? 0) : null,
-      };
-    }),
-  );
-  if (rows.length === 0) {
-    return <p className={shellNote("muted")}>Nenhum órgão participante neste ciclo.</p>;
-  }
-
+function Step({ number, title, children }: { number: string; title: string; children: ReactNode }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-left text-sm">
-        <caption className="sr-only">Credenciais por órgão e ciclo</caption>
-        <thead>
-          <tr className="text-xs font-medium tracking-wide text-[#9a9bb0] uppercase">
-            <th className="pb-3 font-medium">Órgão</th>
-            <th className="pb-3 font-medium">Ciclo</th>
-            <th className="pb-3 font-medium">Elegíveis</th>
-            <th className="pb-3 font-medium">Disponíveis</th>
-            <th className="pb-3 font-medium">Usadas</th>
-            <th className="pb-3 font-medium">Ainda cabe</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key} className="border-t border-[#f4f3f8]">
-              <td className="py-4 pr-4 font-medium text-[#2c2a4a]">{row.organization}</td>
-              <td className="py-4 pr-4 text-[#7a7b90]">{row.cycle}</td>
-              <td className="py-4 pr-4 text-[#7a7b90]">{row.eligible ?? "—"}</td>
-              <td className="py-4 pr-4 text-[#7a7b90]">{row.available}</td>
-              <td className="py-4 pr-4 text-[#7a7b90]">{row.consumed}</td>
-              <td className="py-4 text-[#7a7b90]">{row.room ?? "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="border-t border-[#f0eef8] py-6 first:border-t-0 first:pt-0 last:pb-0">
+      <h2 className="text-base font-semibold text-[#2c2a4a]">
+        {number}. {title}
+      </h2>
+      <div className="mt-3">{children}</div>
     </div>
   );
 }

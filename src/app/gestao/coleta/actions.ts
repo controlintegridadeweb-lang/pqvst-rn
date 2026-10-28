@@ -8,7 +8,6 @@ import {
   isUuid,
   parseCycleIdentity,
   parseOrganization,
-  parseSourceNote,
   planCredentialBatch,
   planHeadcount,
   assertCollectionWindow,
@@ -117,8 +116,6 @@ export async function saveHeadcount(_previous: FormState, formData: FormData): P
   if (!allowed.ok) return { error: allowed.error.message, notice: null };
 
   const headcount = Number(formData.get("headcount"));
-  const note = parseSourceNote(String(formData.get("sourceNote") ?? ""));
-  if (!note.ok) return { error: note.error.message, notice: null };
   const existing = await credentialTotal(cycleId, organizationId);
   if (!existing.ok) return { error: existing.error.message, notice: null };
   const planned = planHeadcount(headcount, existing.value);
@@ -128,7 +125,7 @@ export async function saveHeadcount(_previous: FormState, formData: FormData): P
     cycleId,
     organizationId,
     headcount: planned.value,
-    sourceNote: note.value,
+    sourceNote: "",
   });
   if (!saved.ok) return { error: saved.error.message, notice: null };
   await recordAudit({

@@ -1,8 +1,8 @@
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { readDeskAccess } from "@/app/gestao/coleta/load";
 import { CredentialDesk } from "@/app/gestao/credenciais/credential-desk";
-import { ShellMetric, ShellPage, formatIsoDate, shell, shellButton } from "@/app/gestao/desk-ui";
+import { formatIsoDate, shell, shellButton } from "@/app/gestao/desk-ui";
 import { CYCLE_STATE_LABELS } from "@/domain/cycles/cycle";
 import { collectionIsOpen, todayInRioGrandeDoNorte } from "@/domain/privacy/issuance";
 
@@ -20,9 +20,9 @@ async function Credentials() {
   const access = await readDeskAccess();
   if (access.status !== "ready") {
     return (
-      <ShellPage kicker="Credenciais" title="Emissão" notice={blockedNotice(access)}>
-        <MetricRow eligible={null} issued={null} available={null} consumed={null} />
-      </ShellPage>
+      <Canvas notice={blockedNotice(access)}>
+        <p className="text-sm leading-6 text-[#7a7b90]">Nenhuma credencial é gerada enquanto o acesso não estiver disponível.</p>
+      </Canvas>
     );
   }
 
@@ -42,20 +42,11 @@ async function Credentials() {
     }),
     organizationIds: cycle.organizationIds,
   }));
-  const eligible = access.desk.populations.reduce((sum, item) => sum + item.headcount, 0);
-  const issued = access.desk.balances.reduce((sum, item) => sum + item.total, 0);
-  const available = access.desk.balances.reduce((sum, item) => sum + item.available, 0);
-  const consumed = access.desk.balances.reduce((sum, item) => sum + item.consumed, 0);
 
   return (
-    <ShellPage
-      kicker="Credenciais"
-      title="Emissão"
-      notice="O texto da credencial aparece só nesta emissão. A base guarda o hash, o órgão e o ciclo."
-    >
-      <MetricRow eligible={eligible} issued={issued} available={available} consumed={consumed} />
+    <Canvas notice="Gere e acompanhe as credenciais utilizadas pelos servidores para responder ao questionário.">
       {access.desk.organizations.length === 0 ? (
-        <div className="mt-5">
+        <div className="mb-5">
           <p className="text-sm leading-6 text-[#7a7b90]">Ainda não há órgão participante.</p>
           <Link href="/gestao/orgaos" className={`${shellButton} mt-4`}>
             Cadastrar órgão
@@ -63,7 +54,7 @@ async function Credentials() {
         </div>
       ) : null}
       {access.desk.cycles.length === 0 ? (
-        <div className="mt-5">
+        <div className="mb-5">
           <p className="text-sm leading-6 text-[#7a7b90]">Ainda não há ciclo aberto.</p>
           <Link href="/gestao/ciclos" className={`${shellButton} mt-4`}>
             Abrir a coleta
@@ -77,28 +68,20 @@ async function Credentials() {
         populations={access.desk.populations}
         balances={access.desk.balances}
       />
-    </ShellPage>
+    </Canvas>
   );
 }
 
-function MetricRow({
-  eligible,
-  issued,
-  available,
-  consumed,
-}: {
-  eligible: number | null;
-  issued: number | null;
-  available: number | null;
-  consumed: number | null;
-}) {
+function Canvas({ notice, children }: { notice: string; children: ReactNode }) {
   return (
-    <section aria-label="Indicadores das credenciais" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <ShellMetric label="Elegíveis" value={eligible} icon="people" />
-      <ShellMetric label="Emitidas" value={issued} icon="key" />
-      <ShellMetric label="Disponíveis" value={available} icon="list" />
-      <ShellMetric label="Usadas" value={consumed} icon="check" tone="accent" />
-    </section>
+    <div className={shell}>
+      <header className="mb-7 max-w-2xl">
+        <p className="text-xs font-semibold tracking-[0.16em] text-[#6d5efc] uppercase">Credenciais</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#2c2a4a]">Credenciais de participação</h1>
+        <p className="mt-2 text-sm leading-6 text-[#7a7b90]">{notice}</p>
+      </header>
+      {children}
+    </div>
   );
 }
 
