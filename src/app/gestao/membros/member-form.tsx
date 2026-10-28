@@ -51,7 +51,7 @@ export function MemberForm({
       <label className="grid gap-2 text-sm font-medium text-[#5c5b73]">
         Vínculo
         <select name="seat" required className={deskField} defaultValue="titular">
-          {MEMBER_SEATS.map((seat) => (
+          {MEMBER_SEATS.filter((seat) => seat !== "member").map((seat) => (
             <option key={seat} value={seat}>
               {MEMBER_SEAT_LABELS[seat]}
             </option>

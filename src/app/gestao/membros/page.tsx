@@ -22,11 +22,10 @@ async function Members() {
   if (access.status !== "ready") {
     return (
       <Canvas notice={blockedNotice(access)}>
-        <section aria-label="Indicadores de membros" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section aria-label="Indicadores de membros" className="grid gap-4 sm:grid-cols-3">
           <Metric label="Vínculos" value={null} />
           <Metric label="Titulares" value={null} />
           <Metric label="Suplentes" value={null} />
-          <Metric label="Responsáveis" value={null} tone="accent" />
         </section>
       </Canvas>
     );
@@ -43,11 +42,10 @@ async function Members() {
 
   return (
     <Canvas notice={notice}>
-      <section aria-label="Indicadores de membros" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Indicadores de membros" className="grid gap-4 sm:grid-cols-3">
         <Metric label="Vínculos" value={members ? active.length : null} />
         <Metric label="Titulares" value={members ? countSeat(active, "titular") : null} />
         <Metric label="Suplentes" value={members ? countSeat(active, "suplente") : null} />
-        <Metric label="Responsáveis" value={members ? countSeat(active, "member") : null} tone="accent" />
       </section>
 
       <div className="mt-6 grid items-start gap-5 xl:grid-cols-5">
@@ -115,7 +113,7 @@ async function Members() {
             ) : null}
             {!access.canManage ? (
               <p className="text-sm leading-6 text-[#7a7b90]">
-                O vínculo de titular, suplente e responsável é gravado pela administração estadual.
+                O vínculo de titular e suplente é gravado pela administração estadual.
               </p>
             ) : null}
           </div>
