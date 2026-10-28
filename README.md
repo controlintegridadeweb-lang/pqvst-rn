@@ -1,5 +1,7 @@
 # PQVST — Rio Grande do Norte
 
+Endereço público: https://pqvst-rn.vercel.app
+
 Plataforma de diagnóstico e transparência do Programa Estadual de Qualidade de Vida e Saúde no Trabalho, no âmbito do PIC/RN.
 
 O questionário oficial ainda não foi importado. A interface não apresenta números fictícios como se fossem resultados publicados.
