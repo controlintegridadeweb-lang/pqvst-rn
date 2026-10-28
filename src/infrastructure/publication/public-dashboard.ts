@@ -1,13 +1,12 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
-import { dashboardFromSnapshots, type PublicSnapshotRow } from "@/domain/dashboards/from-snapshots";
-import { emptyDashboard, type DashboardModel } from "@/domain/dashboards/view-model";
+import { dashboardCatalog, emptyCatalog, type DashboardCatalog, type PublicSnapshotRow } from "@/domain/dashboards/from-snapshots";
 
-export async function readPublicDashboard(): Promise<DashboardModel> {
+export async function readPublicDashboard(): Promise<DashboardCatalog> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return emptyDashboard("database_not_configured");
+  if (!url || !key) return emptyCatalog("database_not_configured");
 
   const supabase = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -21,8 +20,8 @@ export async function readPublicDashboard(): Promise<DashboardModel> {
     .order("created_at", { ascending: false })
     .limit(2000);
 
-  if (error || !data) return emptyDashboard("publication_source_not_connected");
-  return dashboardFromSnapshots(data.map(snapshotRow));
+  if (error || !data) return emptyCatalog("publication_source_not_connected");
+  return dashboardCatalog(data.map(snapshotRow));
 }
 
 function snapshotRow(row: {

@@ -1,14 +1,14 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { OrganizationsLive } from "@/app/transparencia/orgaos/organizations-view";
-import { emptyDashboard } from "@/domain/dashboards/view-model";
+import { emptyCatalog } from "@/domain/dashboards/from-snapshots";
 import { readPublicDashboard } from "@/infrastructure/publication/public-dashboard";
 
 export const metadata = { title: "Órgãos" };
 
 export default function OrganizationsTransparencyPage() {
   return (
-    <Suspense fallback={<OrganizationsLive initial={emptyDashboard("no_publication")} />}>
+    <Suspense fallback={<OrganizationsLive initial={emptyCatalog("no_publication")} />}>
       <PublishedOrganizations />
     </Suspense>
   );

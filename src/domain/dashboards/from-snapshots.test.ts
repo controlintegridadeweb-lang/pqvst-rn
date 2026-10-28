@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dashboardFromSnapshots, type PublicSnapshotRow } from "@/domain/dashboards/from-snapshots";
+import { dashboardCatalog, dashboardFromSnapshots, type PublicSnapshotRow } from "@/domain/dashboards/from-snapshots";
 
 function row(overrides: Partial<PublicSnapshotRow>): PublicSnapshotRow {
   return {
@@ -71,5 +71,25 @@ describe("dashboardFromSnapshots", () => {
       { cycle: "2025", iqvst: 3.1, comparable: false },
       { cycle: "2026", iqvst: 3.77, comparable: true },
     ]);
+  });
+
+  it("separa o painel por período anual e conserva a série completa", () => {
+    const rows = [
+      row({
+        publicationId: "pub-2025",
+        cycleId: "cycle-2025",
+        cycleName: "2025",
+        value: "3.1000",
+        createdAt: "2025-10-28T15:00:00.000Z",
+      }),
+      row({}),
+    ];
+
+    const older = dashboardFromSnapshots(rows, "2025");
+    expect(older.title).toBe("2025");
+    expect(older.iqvstLabel).toBe("3,10");
+    expect(older.history.map((point) => point.cycle)).toEqual(["2025", "2026"]);
+
+    expect(dashboardCatalog(rows).editions.map((edition) => edition.year)).toEqual(["2026", "2025"]);
   });
 });

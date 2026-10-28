@@ -67,15 +67,57 @@ function BandNote({ code, align = "left" }: { code: (typeof GAUGE_BANDS)[number]
 export default function MethodologyPage() {
   return (
     <>
+      <section className="bg-[#f3f4f6]">
+        <div className="mx-auto max-w-6xl px-5 py-12">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-xs font-semibold tracking-[0.16em] text-pine uppercase">Metodologia</p>
+            <h1 className="mt-3 text-3xl text-ink md:text-4xl">Os seis eixos de avaliação</h1>
+            <p className="mt-4 text-base leading-7 text-[#5c5c5c]">
+              O PQVT está estruturado em seis eixos que permitem compreender diferentes aspectos da qualidade de vida e
+              da saúde no trabalho. Todos possuem o mesmo peso no cálculo do IQVST.
+            </p>
+          </div>
+          <ol className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
+            {OFFICIAL_AXES.map((axis, index) => {
+              const featured = index % 3 === 1;
+              return (
+                <li key={axis.code}>
+                  <article
+                    className={
+                      featured
+                        ? "flex h-full flex-col rounded-2xl bg-pine p-5 text-white shadow-lg"
+                        : "flex h-full flex-col rounded-2xl bg-white p-5 text-ink shadow-md"
+                    }
+                  >
+                    <span
+                      className={
+                        featured
+                          ? "grid h-10 w-10 place-items-center rounded-full bg-white/20 text-sm font-semibold text-white"
+                          : "grid h-10 w-10 place-items-center rounded-full bg-[#fde7f0] text-sm font-semibold text-pine"
+                      }
+                    >
+                      {axis.code}
+                    </span>
+                    <h3 className={`mt-3 text-base ${featured ? "text-white" : "text-ink"}`}>{axis.name}</h3>
+                    <p className={`mt-2 text-sm leading-6 ${featured ? "text-white" : "text-[#3f3f3f]"}`}>
+                      {axis.description}
+                    </p>
+                  </article>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      </section>
+
       <section className="grid overflow-hidden bg-white lg:grid-cols-2">
         <div className="flex flex-col justify-center bg-pine px-5 py-12 text-white sm:py-14 lg:rounded-r-[4.5rem] lg:py-16 lg:pr-12 lg:pl-[max(1.25rem,calc((100vw-72rem)/2+2.5rem))]">
           <p className="text-sm font-semibold tracking-wide uppercase">IQVST</p>
-          <h1 className="mt-4 max-w-xl text-3xl leading-tight sm:text-4xl">
-            A média dos eixos, não a média solta das perguntas.
-          </h1>
+          <h2 className="mt-4 max-w-xl text-3xl leading-tight sm:text-4xl">Como é calculado o indicador?</h2>
           <p className="mt-5 max-w-md text-base leading-7 text-white/90">
-            Primeiro se calcula a média das perguntas pontuáveis de cada eixo. O IQVST é a média aritmética dessas seis
-            médias. Todos os eixos têm o mesmo peso.
+            O IQVST é calculado a partir da média dos resultados dos seis eixos de avaliação. Primeiro, calcula-se a
+            média das respostas válidas de cada eixo. Depois, essas seis médias são reunidas em um único resultado, com
+            o mesmo peso para todos os eixos.
           </p>
         </div>
         <div className="flex items-center bg-white px-5 py-12 text-pine-deep sm:py-14 lg:py-16 lg:pr-[max(1.25rem,calc((100vw-72rem)/2+2.5rem))] lg:pl-14">
@@ -108,7 +150,8 @@ export default function MethodologyPage() {
               </div>
             </div>
             <p className="max-w-md border-t border-[#f3d0de] pt-5 text-sm leading-6 text-[#7a3050]">
-              Pergunta sem resposta não entra como zero. Eixo sem dado impede o cálculo do indicador.
+              Importante: Perguntas sem resposta não são consideradas como zero. Caso algum eixo não tenha dados válidos, o
+              indicador não poderá ser calculado.
             </p>
           </div>
         </div>
@@ -119,8 +162,8 @@ export default function MethodologyPage() {
           <div className="grid items-end gap-4 lg:grid-cols-[1.1fr_0.9fr]">
             <h2 className="text-3xl text-ink">Classificação descrita no guia</h2>
             <p className="text-sm leading-6 text-[#5c5c5c] lg:text-right">
-              As faixas vão de 1,0 a 5,0. O ponteiro marca o exemplo do guia, 3,77, na faixa Boa. Não é um resultado
-              publicado.
+              A escala de avaliação vai de 1,0 a 5,0. O valor de 3,77, classificado na faixa <strong>Boa</strong>, é
+              apenas um exemplo ilustrativo e não representa um resultado oficial do programa.
             </p>
           </div>
           <div className="mx-auto mt-6 max-w-3xl">
@@ -132,42 +175,6 @@ export default function MethodologyPage() {
                 <BandNote code={band.code} />
               </li>
             ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="bg-[#f48fb1]">
-        <div className="mx-auto max-w-6xl px-5 py-12">
-          <h2 className="text-center text-3xl text-pine-deep">Os seis eixos oficiais</h2>
-          <ol className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
-            {OFFICIAL_AXES.map((axis, index) => {
-              const featured = index % 3 === 1;
-              return (
-                <li key={axis.code}>
-                  <article
-                    className={
-                      featured
-                        ? "flex h-full flex-col rounded-2xl bg-pine p-5 text-white shadow-lg"
-                        : "flex h-full flex-col rounded-2xl bg-white p-5 text-ink shadow-md"
-                    }
-                  >
-                    <span
-                      className={
-                        featured
-                          ? "grid h-10 w-10 place-items-center rounded-full bg-white/20 text-sm font-semibold text-white"
-                          : "grid h-10 w-10 place-items-center rounded-full bg-[#fde7f0] text-sm font-semibold text-pine"
-                      }
-                    >
-                      {axis.code}
-                    </span>
-                    <h3 className={`mt-3 text-base ${featured ? "text-white" : "text-ink"}`}>{axis.name}</h3>
-                    <p className={`mt-2 text-sm leading-6 ${featured ? "text-white" : "text-[#3f3f3f]"}`}>
-                      {axis.description}
-                    </p>
-                  </article>
-                </li>
-              );
-            })}
           </ol>
         </div>
       </section>

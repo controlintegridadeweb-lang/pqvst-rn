@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { OFFICIAL_AXES } from "@/domain/indicators/axes";
-import { emptyDashboard } from "@/domain/dashboards/view-model";
-import { getPublicationAvailability } from "@/infrastructure/publication-status";
 
 function AxisMark({ index }: { index: number }) {
   const paths = [
@@ -20,8 +18,6 @@ function AxisMark({ index }: { index: number }) {
 }
 
 export default function HomePage() {
-  const dashboard = emptyDashboard(getPublicationAvailability());
-
   return (
     <div>
       <section className="relative overflow-hidden bg-pine text-white">
@@ -32,18 +28,26 @@ export default function HomePage() {
         />
         <div className="relative grid items-center gap-10 px-5 py-16 lg:grid-cols-2 lg:gap-0 lg:py-20">
           <div className="flex flex-col gap-4 lg:py-2 lg:pr-[5vw] lg:pl-[max(1.25rem,calc((100vw-72rem)/2+1.25rem))]">
-            <h1 className="text-5xl text-white md:text-[3.25rem]">Qualidade de vida no trabalho.</h1>
-            <p className="text-xl font-medium text-white">Diagnóstico e transparência para os órgãos do RN.</p>
-            <p className="text-base leading-7 text-white">
-              O PQVST reúne a percepção dos servidores, calcula o IQVST e mostra somente resultados agregados. A escuta
-              não avalia, não ranqueia e não pune pessoas.
+            <p className="text-xs font-medium tracking-[0.14em] text-white uppercase">
+              Programa de qualidade de vida e saúde no trabalho — PQVT
             </p>
-            <p className="text-base text-white">{dashboard.title}.</p>
+            <h1 className="text-5xl text-white md:text-[3.25rem]">Qualidade de vida e saúde no trabalho</h1>
+            <p className="text-xl font-medium text-white">
+              Ouvir os servidores é o primeiro passo para melhorar o ambiente de trabalho.
+            </p>
+            <p className="text-base leading-7 text-white">
+              O PQVT busca compreender como os servidores públicos percebem suas condições de trabalho e utilizar essas
+              informações para orientar melhorias nos órgãos do Rio Grande do Norte.
+            </p>
             <Link
               href="/programa"
-              className="on-pink mt-2 w-fit rounded-full border-2 border-white px-6 py-2.5 text-base font-medium text-white no-underline hover:bg-white hover:text-pine"
+              className="on-pink mt-2 inline-flex w-fit items-center gap-2 rounded-full border-2 border-white px-6 py-2.5 text-base font-medium text-white no-underline hover:bg-white hover:text-pine"
             >
-              Conhecer o programa
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 11v5M12 8h.01" strokeLinecap="round" />
+              </svg>
+              Conheça o programa
             </Link>
           </div>
           <div className="lg:py-2 lg:pr-[max(1.25rem,calc((100vw-72rem)/2+1.25rem))] lg:pl-[5vw]">
@@ -68,9 +72,14 @@ export default function HomePage() {
       <section className="bg-[#c2185b] text-white">
         <div className="mx-auto grid max-w-6xl gap-5 px-5 py-14 md:grid-cols-3">
           {[
-            ["01", "Participar", "A credencial não pede nome, CPF ou matrícula.", "/diagnostico"],
-            ["02", "Metodologia", "Os seis eixos têm o mesmo peso na média do IQVST.", "/metodologia"],
-            ["03", "Privacidade", "A resposta fica separada da identidade de quem participa.", "/privacidade"],
+            ["01", "Participação", "Participe sem informar nome, CPF ou matrícula.", "/diagnostico"],
+            [
+              "02",
+              "Resultados",
+              "As respostas compõem o IQVST, calculado a partir de seis eixos com pesos iguais.",
+              "/metodologia",
+            ],
+            ["03", "Privacidade", "Suas respostas não são associadas à sua identidade.", "/privacidade"],
           ].map(([number, title, text, href]) => (
             <Link
               key={href}
@@ -78,10 +87,8 @@ export default function HomePage() {
               className="on-pink rounded-lg border border-white bg-transparent p-6 no-underline"
             >
               <p className="text-3xl font-semibold text-white">{number}</p>
-              <p className="mt-8 text-base leading-7 text-white">
-                <span className="font-semibold">{title}. </span>
-                {text}
-              </p>
+              <p className="mt-8 text-base font-semibold text-white">{title}</p>
+              <p className="mt-2 text-base leading-7 text-white">{text}</p>
             </Link>
           ))}
         </div>

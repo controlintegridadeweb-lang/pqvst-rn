@@ -29,11 +29,11 @@ export default function ProgramPage() {
           />
           <div className="order-1 max-w-xl pb-8 lg:order-2 lg:pr-36 lg:pb-10">
             <p className="text-sm font-medium text-pine">Institucional</p>
-            <h1 className="mt-2 text-3xl text-ink md:text-4xl">Um diagnóstico a serviço da melhoria do trabalho.</h1>
+            <h1 className="mt-2 text-3xl text-ink md:text-4xl">Um compromisso com a qualidade de vida no trabalho.</h1>
             <p className="mt-3 text-base leading-7 text-[#3f3f3f]">
-              O Programa Estadual de Qualidade de Vida e Saúde no Trabalho integra a política de integridade e
-              compliance do Rio Grande do Norte. A plataforma registra percepções, calcula indicadores e acompanha
-              providências dos órgãos.
+              O Programa de Qualidade de Vida e Saúde no Trabalho (PQVT) integra a política de integridade do Rio
+              Grande do Norte. Por meio da escuta dos servidores e da análise de indicadores, contribui para identificar
+              necessidades e orientar melhorias nas condições de trabalho dos órgãos estaduais.
             </p>
             <Link
               href="/metodologia"

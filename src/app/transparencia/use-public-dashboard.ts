@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient, type RealtimeChannel } from "@supabase/supabase-js";
-import type { DashboardModel } from "@/domain/dashboards/view-model";
+import type { DashboardCatalog } from "@/domain/dashboards/from-snapshots";
 
 const REFRESH_MS = 5000;
 let browser: ReturnType<typeof createClient> | null = null;
@@ -22,8 +22,8 @@ function publicBrowser() {
   return browser;
 }
 
-export function usePublicDashboard(initial: DashboardModel) {
-  const [model, setModel] = useState(initial);
+export function usePublicDashboard(initial: DashboardCatalog) {
+  const [catalog, setCatalog] = useState(initial);
 
   useEffect(() => {
     let stopped = false;
@@ -32,8 +32,8 @@ export function usePublicDashboard(initial: DashboardModel) {
       try {
         const response = await fetch("/api/transparencia", { cache: "no-store" });
         if (!response.ok || stopped) return;
-        const next = (await response.json()) as DashboardModel;
-        if (!stopped) setModel(next);
+        const next = (await response.json()) as DashboardCatalog;
+        if (!stopped && Array.isArray(next.editions) && next.fallback) setCatalog(next);
       } catch {
         // Mantém a última publicação lida se a rede falhar.
       }
@@ -66,5 +66,5 @@ export function usePublicDashboard(initial: DashboardModel) {
     };
   }, []);
 
-  return model;
+  return catalog;
 }

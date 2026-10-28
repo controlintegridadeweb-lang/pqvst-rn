@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePublicDashboard } from "@/app/transparencia/use-public-dashboard";
 import { OFFICIAL_AXES } from "@/domain/indicators/axes";
+import type { DashboardCatalog } from "@/domain/dashboards/from-snapshots";
 import type { DashboardModel } from "@/domain/dashboards/view-model";
 
 const NOTES = [
@@ -12,15 +13,11 @@ const NOTES = [
   "A lista permanece vazia quando não existe agregado publicado. Isso não significa participação zero.",
 ];
 
-export function OrganizationsLive({ initial }: { initial: DashboardModel }) {
-  const model = usePublicDashboard(initial);
+export function OrganizationsLive({ initial }: { initial: DashboardCatalog }) {
+  const catalog = usePublicDashboard(initial);
+  const model: DashboardModel = catalog.editions[0]?.model ?? catalog.fallback;
   const published = model.availability === "published";
   const indicators = [
-    {
-      label: "Órgãos publicados",
-      value: published && model.publishedOrganizations !== null ? model.publishedOrganizations.toLocaleString("pt-BR") : null,
-      hint: "Resultado autorizado",
-    },
     { label: "IQVST", value: null, hint: "Média de cada órgão na lista" },
     { label: "Eixos", value: published ? String(OFFICIAL_AXES.length) : null, hint: "Seis eixos oficiais" },
     { label: "Ações autorizadas", value: null, hint: "Somente divulgação" },
@@ -52,7 +49,7 @@ export function OrganizationsLive({ initial }: { initial: DashboardModel }) {
           </div>
         </header>
 
-        <section aria-label="Indicadores dos órgãos" className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <section aria-label="Indicadores dos órgãos" className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {indicators.map((item) => (
             <article
               key={item.label}

@@ -2,9 +2,9 @@
 
 import { Dashboard } from "@/app/transparencia/dashboard-view";
 import { usePublicDashboard } from "@/app/transparencia/use-public-dashboard";
-import type { DashboardModel } from "@/domain/dashboards/view-model";
+import type { DashboardCatalog } from "@/domain/dashboards/from-snapshots";
 
-export function LiveDashboard({ initial }: { initial: DashboardModel }) {
-  const model = usePublicDashboard(initial);
-  return <Dashboard model={model} />;
+export function LiveDashboard({ initial }: { initial: DashboardCatalog }) {
+  const catalog = usePublicDashboard(initial);
+  return <Dashboard model={catalog.fallback} editions={catalog.editions} />;
 }

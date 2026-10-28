@@ -18,11 +18,50 @@ export interface PublicSnapshotRow {
   createdAt: string;
 }
 
-export function dashboardFromSnapshots(rows: readonly PublicSnapshotRow[]): DashboardModel {
-  if (rows.length === 0) return emptyDashboard("no_publication");
+export interface DashboardEdition {
+  year: string;
+  cycleName: string;
+  model: DashboardModel;
+}
 
-  const current = rows.reduce((latest, row) => (row.createdAt > latest.createdAt ? row : latest));
-  const publication = rows.filter((row) => row.publicationId === current.publicationId);
+export interface DashboardCatalog {
+  editions: DashboardEdition[];
+  fallback: DashboardModel;
+}
+
+export function emptyCatalog(availability: Exclude<DashboardModel["availability"], "published">): DashboardCatalog {
+  return { editions: [], fallback: emptyDashboard(availability) };
+}
+
+export function periodYear(row: PublicSnapshotRow): string {
+  const named = row.cycleName.match(/\b(?:19|20)\d{2}\b/);
+  if (named) return named[0];
+  const date = new Date(row.createdAt);
+  if (!Number.isNaN(date.getTime())) {
+    return new Intl.DateTimeFormat("en-US", { timeZone: "America/Fortaleza", year: "numeric" }).format(date);
+  }
+  const label = row.cycleName.trim();
+  return label || "Sem período";
+}
+
+export function dashboardCatalog(rows: readonly PublicSnapshotRow[]): DashboardCatalog {
+  if (rows.length === 0) return emptyCatalog("no_publication");
+  const years = [...new Set(rows.map(periodYear))].sort(comparePeriods);
+  const editions = years.flatMap((year) => {
+    const model = dashboardFromSnapshots(rows, year);
+    if (model.availability !== "published") return [];
+    return [{ year, cycleName: model.title, model }];
+  });
+  if (editions.length === 0) return emptyCatalog("no_publication");
+  return { editions, fallback: editions[0].model };
+}
+
+export function dashboardFromSnapshots(rows: readonly PublicSnapshotRow[], year?: string): DashboardModel {
+  const scoped = year ? rows.filter((row) => periodYear(row) === year) : rows;
+  if (scoped.length === 0) return emptyDashboard("no_publication");
+
+  const current = scoped.reduce((latest, row) => (row.createdAt > latest.createdAt ? row : latest));
+  const publication = scoped.filter((row) => row.publicationId === current.publicationId);
   const statewide = publication.filter((row) => row.organizationId === null);
   const iqvst = decimalOf(statewide.find((row) => row.metric === "iqvst" && row.axisCode === null)?.value ?? null);
   const axes = OFFICIAL_AXES.map((axis) => {
@@ -124,6 +163,13 @@ function bandLabel(stored: string | null, value: Decimal | null): string | null 
   } catch {
     return null;
   }
+}
+
+function comparePeriods(left: string, right: string) {
+  const leftYear = Number(left);
+  const rightYear = Number(right);
+  if (Number.isInteger(leftYear) && Number.isInteger(rightYear)) return rightYear - leftYear;
+  return right.localeCompare(left, "pt-BR");
 }
 
 function formatMoment(iso: string) {

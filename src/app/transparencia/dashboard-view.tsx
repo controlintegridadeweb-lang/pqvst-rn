@@ -1,6 +1,9 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { OFFICIAL_BANDS } from "@/domain/indicators/classification";
+import type { DashboardEdition } from "@/domain/dashboards/from-snapshots";
 import { type DashboardAxis, type DashboardModel } from "@/domain/dashboards/view-model";
 import { AxisComparisonChart, HistoryChart } from "@/components/charts";
 
@@ -105,25 +108,35 @@ function IqvstGauge({ label, classification }: { label: string | null; classific
   );
 }
 
-export function Dashboard({ model }: { model: DashboardModel }) {
+export function Dashboard({ model, editions = [] }: { model: DashboardModel; editions?: readonly DashboardEdition[] }) {
+  const [year, setYear] = useState(editions[0]?.year ?? "");
+  const activeYear = editions.some((edition) => edition.year === year) ? year : (editions[0]?.year ?? "");
+  const selected = editions.find((edition) => edition.year === activeYear)?.model ?? model;
   const indicators = [
-    { label: "Órgãos participantes", value: figure(model.participatingOrganizations), empty: model.participatingOrganizations === null, hint: "Conjunto estadual" },
-    { label: "Órgãos publicados", value: figure(model.publishedOrganizations), empty: model.publishedOrganizations === null, hint: "Resultado autorizado" },
-    { label: "Respostas válidas", value: figure(model.responseCount), empty: model.responseCount === null, hint: "Somente agregados" },
-    { label: "IQVST estadual", value: model.iqvstLabel ?? "–", empty: model.iqvstLabel === null, hint: model.classificationLabel ?? "Média dos seis eixos" },
-    { label: "Participação", value: model.participationLabel ?? "–", empty: model.participationLabel === null, hint: "Servidores elegíveis" },
+    { label: "Órgãos participantes", value: figure(selected.participatingOrganizations), empty: selected.participatingOrganizations === null, hint: "Conjunto estadual" },
+    { label: "Respostas válidas", value: figure(selected.responseCount), empty: selected.responseCount === null, hint: "Somente agregados" },
+    { label: "IQVST estadual", value: selected.iqvstLabel ?? "–", empty: selected.iqvstLabel === null, hint: selected.classificationLabel ?? "Média dos seis eixos" },
+    { label: "Participação", value: selected.participationLabel ?? "–", empty: selected.participationLabel === null, hint: "Servidores elegíveis" },
   ];
-  const bars = model.axes.map((axis) => ({
+  const bars = selected.axes.map((axis) => ({
     code: axis.code,
     name: axis.name,
     mean: axis.status === "published" ? axis.mean : null,
   }));
   const scaleOrder = [...OFFICIAL_BANDS].reverse();
-  const notes = [
-    ...model.notices,
-    "A taxa de participação entra com quantitativo confiável de servidores elegíveis.",
-    "O recorte por setor fica de fora para proteger a identificação.",
-    "Os indicadores públicos saem de agregados verificados. Esta tela não consulta respostas individuais.",
+  const readings = [
+    {
+      label: "Publicação",
+      text: "Os indicadores são apresentados somente após validação. A ausência de resultados não significa nota zero.",
+    },
+    {
+      label: "Participação",
+      text: "A taxa é calculada apenas quando há dados confiáveis sobre o número de servidores elegíveis.",
+    },
+    {
+      label: "Privacidade",
+      text: "Os resultados são apresentados de forma agregada, sem respostas individuais ou identificação por setor.",
+    },
   ];
 
   return (
@@ -132,11 +145,28 @@ export function Dashboard({ model }: { model: DashboardModel }) {
         <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 max-w-xl">
             <p className="text-sm font-medium text-[#d12d6c]">Painel público</p>
-            <h1 className="mt-1 max-w-full text-2xl leading-tight font-semibold tracking-tight text-[#241820] md:text-3xl">{model.title}</h1>
+            <h1 className="mt-1 max-w-full text-2xl leading-tight font-semibold tracking-tight text-[#241820] md:text-3xl">{selected.title}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <label className="inline-flex items-center gap-2 rounded-full bg-white py-1.5 pr-2 pl-3 text-xs ring-1 ring-[#f3e4ea]">
+              <span className="text-[#7d6a73]">Período</span>
+              <select
+                value={activeYear}
+                onChange={(event) => setYear(event.target.value)}
+                aria-label="Período anual"
+                disabled={editions.length === 0}
+                className="bg-transparent font-medium text-[#241820] outline-none disabled:text-[#c9a3b2]"
+              >
+                {editions.length === 0 ? <option value="">Sem publicação</option> : null}
+                {editions.map((edition) => (
+                  <option key={edition.year} value={edition.year}>
+                    {edition.year}
+                  </option>
+                ))}
+              </select>
+            </label>
             <p aria-live="polite" className="rounded-full bg-white px-3 py-1.5 text-xs text-[#7d6a73] ring-1 ring-[#f3e4ea]">
-              {model.updatedAt ? `Atualizado em ${model.updatedAt}` : "Aguardando publicação"}
+              {selected.updatedAt ? `Atualizado em ${selected.updatedAt}` : "Aguardando publicação"}
             </p>
             <nav aria-label="Recortes do painel" className="flex items-center gap-1.5">
               <span className="rounded-full bg-[#d12d6c] px-3 py-1.5 text-xs font-medium text-white">Estadual</span>
@@ -150,7 +180,7 @@ export function Dashboard({ model }: { model: DashboardModel }) {
           </div>
         </header>
 
-        <section aria-label="Indicadores estaduais" className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+        <section aria-label="Indicadores estaduais" className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {indicators.map((item) => (
             <article
               key={item.label}
@@ -171,7 +201,7 @@ export function Dashboard({ model }: { model: DashboardModel }) {
 
         <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-3">
           <Panel title="IQVST estadual" subtitle="Média dos seis eixos, todos com o mesmo peso.">
-            <IqvstGauge label={model.iqvstLabel} classification={model.classificationLabel} />
+            <IqvstGauge label={selected.iqvstLabel} classification={selected.classificationLabel} />
           </Panel>
 
           <Panel title="Seis eixos" subtitle="Cada barra mostra a média autorizada, de 1 a 5.">
@@ -179,27 +209,39 @@ export function Dashboard({ model }: { model: DashboardModel }) {
           </Panel>
 
           <Panel title="Faixas oficiais" subtitle="A escala do guia, da menor percepção à maior.">
-            <div className="flex h-3 gap-1" role="img" aria-label="Faixas oficiais de 1,0 a 5,0, ainda sem marca de resultado.">
-              {scaleOrder.map((band) => (
-                <div
-                  key={band.code}
-                  className="h-full rounded-full"
-                  style={{ flexGrow: BAND_SPAN[band.code], backgroundColor: BAND_FILL[band.code] }}
-                />
-              ))}
+            <div>
+              <div
+                className="flex h-3 overflow-hidden rounded-full"
+                role="img"
+                aria-label="Faixas oficiais de 1,0 a 5,0, ainda sem marca de resultado."
+              >
+                {scaleOrder.map((band) => (
+                  <div
+                    key={band.code}
+                    className="h-full"
+                    style={{ flexGrow: BAND_SPAN[band.code], backgroundColor: BAND_FILL[band.code] }}
+                  />
+                ))}
+              </div>
+              <div className="mt-1.5 flex justify-between text-[11px] text-[#8a7380] tabular-nums">
+                <span>1,0</span>
+                <span>5,0</span>
+              </div>
             </div>
-            <ul className="mt-5 space-y-3">
+            <ul className="mt-3 space-y-1.5">
               {scaleOrder.map((band) => (
-                <li key={band.code} className="flex items-start justify-between gap-3 text-sm">
-                  <span className="flex min-w-0 items-start gap-2.5">
-                    <span
-                      aria-hidden="true"
-                      className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: BAND_FILL[band.code] }}
-                    />
-                    <span className="leading-5 text-[#3f2c34]">{band.label}</span>
-                  </span>
-                  <span className="shrink-0 text-[#8a7380] tabular-nums">{band.officialRangeLabel}</span>
+                <li
+                  key={band.code}
+                  className="flex items-center gap-3 rounded-xl px-2.5 py-2"
+                  style={{ backgroundColor: `${BAND_FILL[band.code]}14` }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-7 w-1 shrink-0 rounded-full"
+                    style={{ backgroundColor: BAND_FILL[band.code] }}
+                  />
+                  <span className="min-w-0 flex-1 text-sm leading-5 text-[#3f2c34]">{band.label}</span>
+                  <span className="shrink-0 text-xs font-medium text-[#6d5a63] tabular-nums">{band.officialRangeLabel}</span>
                 </li>
               ))}
             </ul>
@@ -208,7 +250,7 @@ export function Dashboard({ model }: { model: DashboardModel }) {
 
         <div className="mt-4 grid w-full min-w-0 items-stretch gap-4 lg:grid-cols-12">
           <Panel className="lg:col-span-5" title="Evolução do IQVST" subtitle="Somente ciclos da mesma metodologia.">
-            <HistoryChart points={model.history} />
+            <HistoryChart points={selected.history} />
           </Panel>
 
           <Panel className="lg:col-span-7" title="Leitura dos eixos" subtitle="O que já pode ser publicado em cada eixo.">
@@ -228,7 +270,7 @@ export function Dashboard({ model }: { model: DashboardModel }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {model.axes.map((axis) => {
+                  {selected.axes.map((axis) => {
                     const published = axis.status === "published";
                     return (
                       <tr key={axis.code} className="border-t border-[#f6eef2]">
@@ -260,12 +302,14 @@ export function Dashboard({ model }: { model: DashboardModel }) {
         </div>
 
         <aside className="mt-4 rounded-2xl bg-white px-5 py-4 shadow-[0_10px_30px_rgba(120,30,60,0.04)] ring-1 ring-[#f3e4ea]">
-          <h2 className="text-sm font-semibold text-[#241820]">Como ler este painel</h2>
+          <h2 className="text-sm font-semibold text-[#241820]">Entenda os resultados</h2>
           <ul className="mt-3 space-y-2.5">
-            {notes.map((notice) => (
-              <li key={notice} className="flex gap-3 text-sm leading-6 text-[#6d5a63]">
+            {readings.map((item) => (
+              <li key={item.label} className="flex gap-3 text-sm leading-6 text-[#6d5a63]">
                 <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#f0b3c8]" />
-                <span>{notice}</span>
+                <span>
+                  <strong className="font-semibold text-[#241820]">{item.label}:</strong> {item.text}
+                </span>
               </li>
             ))}
           </ul>
