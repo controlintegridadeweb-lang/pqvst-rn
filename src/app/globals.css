@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #171717;
+  --muted: #4d4d4d;
+  --paper: #ffffff;
+  --raised: #ffffff;
+  --pine: #d12d6c;
+  --pine-deep: #a41f52;
+  --lagoon: #d12d6c;
+  --sand: #f4f4f5;
+  --sun: #f4f4f5;
+  --line: #e5e5e5;
+  --amber: #8a5a00;
+  --clay: #9f1239;
+  --moss: #3f6212;
+  color-scheme: light;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-paper: var(--paper);
+  --color-raised: var(--raised);
+  --color-pine: var(--pine);
+  --color-pine-deep: var(--pine-deep);
+  --color-lagoon: var(--lagoon);
+  --color-sand: var(--sand);
+  --color-sun: var(--sun);
+  --color-line: var(--line);
+  --color-amber: var(--amber);
+  --color-clay: var(--clay);
+  --color-moss: var(--moss);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #171717;
+  font-family: var(--font-inter), "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+p {
+  line-height: 1.7;
+}
+
+@layer base {
+  a {
+    color: #a41f52;
+  }
+
+  a:hover {
+    color: #d12d6c;
+  }
+
+  header a,
+  header a:hover,
+  footer a,
+  footer a:hover,
+  .on-pink,
+  .on-pink:hover {
+    color: #ffffff;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid #d12d6c;
+  outline-offset: 3px;
+}
+
+.survey-tab:focus-visible,
+.survey-field:focus-visible {
+  outline: 2px solid #d12d6c;
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 30;
+  background: #d12d6c;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+}
